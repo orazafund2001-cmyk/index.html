@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inteligencia de Mercado Industrial</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#eceee9;--pn:#fbfbf9;--ink:#1d2628;--mut:#627074;--ln:#d5d9d3;--ac:#0e6f6a;--ac2:#c2561b;--sb:#1d2628;--hv:#e4e8e2;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a1c;--pn:#1b2326;--ink:#e6ebe9;--mut:#8d9c9f;--ln:#2c373a;--ac:#3fb8ae;--ac2:#e8824a;--sb:#0f1517;--hv:#243034;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a1c;--pn:#1b2326;--ink:#e6ebe9;--mut:#8d9c9f;--ln:#2c373a;--ac:#3fb8ae;--ac2:#e8824a;--sb:#0f1517;--hv:#243034;color-scheme:dark}
+html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif}
+h1,h2,.hd{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:600}
+#app{height:100%}aside.sb{background:var(--sb);color:#dfe6e4}
+.nav{display:block;width:100%;text-align:left;padding:8px 12px;border-radius:6px;color:#aab7b5;white-space:nowrap}.nav:hover{background:#ffffff14}.nav.on{background:var(--ac);color:#fff}
+.btn{border:1px solid var(--ln);background:var(--pn);padding:6px 11px;border-radius:6px;cursor:pointer;color:var(--ink)}.btn:hover{background:var(--hv)}.btn.p{background:var(--ac);border-color:var(--ac);color:#fff}.btn.d{color:var(--ac2)}
+input,select,textarea{background:var(--pn);color:var(--ink);border:1px solid var(--ln);border-radius:6px;padding:6px 8px;max-width:100%}input:focus,select:focus,textarea:focus,[contenteditable]:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:-1px}
+.pan{background:var(--pn);border:1px solid var(--ln);border-radius:8px}
+#tw{overflow:auto;max-height:calc(100vh - 200px)}table{border-collapse:separate;border-spacing:0;min-width:100%}
+th{position:sticky;top:0;background:var(--hv);text-align:left;padding:7px 10px;border-bottom:1px solid var(--ln);border-right:1px solid var(--ln);cursor:pointer;white-space:nowrap;user-select:none;font-weight:600;z-index:2}
+td{padding:5px 10px;border-bottom:1px solid var(--ln);border-right:1px solid var(--ln);min-width:110px;max-width:320px;vertical-align:top}td select{width:100%}
+tr:hover td{background:var(--hv)}.w0{min-width:0;width:34px;padding:2px;text-align:center}
+.chip{padding:3px 10px;border:1px solid var(--ln);border-radius:99px;cursor:pointer;background:var(--pn)}.chip.on{background:var(--ac2);border-color:var(--ac2);color:#fff}
+.kpi{padding:4px 22px 4px 0;margin-right:22px;border-right:1px solid var(--ln)}.kpi b{display:block;font:600 34px/1.1 "IBM Plex Sans Condensed",sans-serif}.kpi span{color:var(--mut)}
+.bar{height:8px;background:var(--ac);border-radius:4px}.mut{color:var(--mut)}
+#map{height:calc(100vh - 190px);min-height:380px;border-radius:8px;border:1px solid var(--ln);background:var(--hv) repeating-linear-gradient(0deg,transparent 0 39px,var(--ln) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,var(--ln) 39px 40px)}
+#dr{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--pn);border-left:1px solid var(--ln);z-index:3000;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}#dr.o{transform:none}
+#mo{position:fixed;inset:0;background:#0008;z-index:3100;display:none;align-items:center;justify-content:center;padding:16px}#mo.o{display:flex}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--sb);color:#fff;padding:8px 14px;border-radius:8px;z-index:4000;display:none}
+label.f{display:block;margin-bottom:10px}label.f>span{display:block;color:var(--mut);margin-bottom:2px;font-size:12px}label.f>*:not(span){width:100%}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-zoom-box,.leaflet-layer,.leaflet-pane>svg,.leaflet-pane>canvas{position:absolute;left:0;top:0}.leaflet-container{overflow:hidden;font:inherit}.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-popup-pane{z-index:700}.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-left{left:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-interactive{cursor:pointer}
+.leaflet-control-zoom{margin:10px;border:1px solid var(--ln);border-radius:6px;overflow:hidden}.leaflet-control-zoom a{display:block;width:30px;height:30px;line-height:30px;text-align:center;background:var(--pn);color:var(--ink);text-decoration:none;font-size:18px}
+.leaflet-popup{position:absolute;text-align:left}.leaflet-popup-content-wrapper{background:var(--pn);color:var(--ink);border-radius:8px;border:1px solid var(--ln)}.leaflet-popup-content{margin:10px 14px;min-width:200px}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-left:-20px;overflow:hidden;pointer-events:none}.leaflet-popup-tip{width:16px;height:16px;margin:-8px auto 0;transform:rotate(45deg);background:var(--pn);border:1px solid var(--ln)}.leaflet-popup-close-button{position:absolute;top:2px;right:6px;text-decoration:none;color:var(--mut);font-size:18px}.leaflet-popup-content a{color:var(--ac)}.leaflet-control-attribution{display:none}
+</style></head>
+<body>
+<div id="app" class="flex flex-col md:flex-row">
+<aside class="sb md:w-56 shrink-0 p-3 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible">
+ <div class="hd text-lg px-2 py-1 md:mb-4 whitespace-nowrap">Mercado Industrial</div>
+ <button class="nav" data-v="dash">▦ Dashboard</button><button class="nav" data-v="emp">☰ Empresas</button><button class="nav" data-v="map">◎ Mapa</button><button class="nav" data-v="imp">⇪ Importar Excel</button><button class="nav" data-v="exp">⇩ Exportar Datos</button><button class="nav" data-v="cfg">⚙ Configuración</button>
+</aside>
+<main class="flex-1 min-w-0 overflow-auto p-4 md:p-6">
+ <div id="fl" class="mb-3 hidden">
+  <div class="flex flex-wrap gap-2 items-center">
+   <input id="q" type="search" placeholder="Buscar nombre, ciudad, país, producto, cliente, certificación…" class="grow" style="min-width:220px">
+   <select id="fe"></select><select id="fp"></select><select id="ft"></select><select id="fc"></select><select id="fr"></select><select id="fk"></select>
+  </div>
+  <div class="flex flex-wrap gap-2 items-center mt-2" id="chips"></div>
+ </div>
+ <section id="v-dash"></section>
+ <section id="v-emp" class="hidden">
+  <div class="flex flex-wrap gap-2 items-center mb-2"><h2 class="text-xl mr-2">Empresas <span id="cnt" class="mut text-sm"></span></h2>
+   <button class="btn p" id="add">➕ Añadir empresa</button><button class="btn" id="addf">➕ Añadir campo</button>
+   <details class="relative"><summary class="btn">Columnas</summary><div id="cols" class="pan absolute p-2 z-10" style="min-width:200px;max-height:300px;overflow:auto"></div></details>
+   <input id="bt" placeholder="Nueva etiqueta" style="width:140px"><button class="btn" id="bta">Etiquetar filtradas</button><button class="btn" id="clr">Quitar orden</button></div>
+  <div id="tw" class="pan"><div id="tbl"></div></div>
+  <div class="mt-2"><button class="btn hidden" id="more">Mostrar más filas</button> <span class="mut text-xs">Clic en un encabezado para ordenar; arrástralo para reordenar. Doble clic o escribe sobre cualquier celda para editar.</span></div>
+ </section>
+ <section id="v-map" class="hidden"><div class="flex flex-wrap gap-3 items-center mb-2"><h2 class="text-xl">Mapa <span id="mc" class="mut text-sm"></span></h2><button class="btn" id="geo">Localizar empresas por dirección</button><button class="btn p" id="mg">Un mapa por país</button><div id="lg" class="flex flex-wrap gap-3 text-xs"></div></div><div id="ct" class="flex flex-wrap gap-2 mb-2"></div><div id="map"></div><div id="gmap" style="display:none;height:calc(100vh - 190px);min-height:380px;border-radius:8px"></div><div id="mgrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px"></div></section>
+ <section id="v-imp" class="hidden max-w-4xl"><h2 class="text-xl mb-2">Importar Excel</h2>
+  <div id="drop" class="pan p-8 text-center mb-3" style="border-style:dashed"><p class="mb-2">Arrastra un archivo .xlsx, .xls o .csv aquí</p><input type="file" id="file" accept=".xlsx,.xls,.csv"></div><div id="imp"></div></section>
+ <section id="v-exp" class="hidden max-w-xl"><h2 class="text-xl mb-2">Exportar datos</h2><div class="pan p-4"><label class="mb-3 block"><input type="checkbox" id="eo"> Solo empresas filtradas actualmente</label><div class="flex gap-2 flex-wrap"><button class="btn p" data-e="xlsx">Excel (.xlsx)</button><button class="btn p" data-e="csv">CSV</button><button class="btn p" data-e="json">JSON</button></div><p class="mut mt-3">Se exportan todos los campos, incluidos los personalizados y los cambios realizados.</p></div></section>
+ <section id="v-cfg" class="hidden max-w-3xl"><h2 class="text-xl mb-2">Configuración</h2><div class="pan p-4 mb-3"><b>Tema</b><div class="flex gap-2 mt-2"><button class="btn" data-t="light">Claro</button><button class="btn" data-t="dark">Oscuro</button><button class="btn" data-t="auto">Sistema</button></div></div>
+  <div class="pan p-4 mb-3"><div class="flex justify-between mb-2"><b>Campos</b><button class="btn p" id="addf2">➕ Añadir campo</button></div><div id="fl2"></div></div>
+  <div class="pan p-4 mb-3"><b>Google Maps (opcional)</b><p class="mut my-2">Con una clave de la API de Google Maps Platform, el mapa y la localización por dirección usan Google en lugar de OpenStreetMap. Necesita Maps JavaScript API y Geocoding API activadas, y restringe la clave a tu dominio.</p><div class="flex gap-2"><input id="gk" placeholder="Clave de API" class="grow"><button class="btn p" id="gks">Guardar clave</button></div></div><div class="pan p-4"><b>Datos</b><div class="flex gap-2 mt-2 flex-wrap"><button class="btn" id="demo">Cargar datos de ejemplo</button><button class="btn d" id="reset">Borrar todos los datos</button></div><p class="mut mt-2">Los datos se guardan en este navegador. Exporta una copia con regularidad.</p></div></section>
+</main></div>
+<aside id="dr"><div class="flex justify-between items-center p-3" style="border-bottom:1px solid var(--ln)"><h2 id="drt" class="text-lg"></h2><button class="btn" id="drx">✕</button></div><div id="drb" class="p-3 overflow-auto grow"></div>
+<div class="p-3 flex gap-2" style="border-top:1px solid var(--ln)"><button class="btn p" id="drs">Guardar</button><button class="btn d" id="drd">Eliminar</button></div></aside>
+<div id="mo"><div class="pan p-4 w-full" style="max-width:420px"><h2 class="text-lg mb-3">Nuevo campo</h2>
+ <label class="f"><span>Nombre del campo</span><input id="nfn" placeholder="Prioridad comercial"></label>
+ <label class="f"><span>Tipo</span><select id="nft"><option value="text">Texto</option><option value="number">Número</option><option value="date">Fecha</option><option value="select">Selección</option><option value="url">Enlace</option><option value="list">Lista (separada por comas)</option><option value="bool">Sí / No</option></select></label>
+ <label class="f hidden" id="nfow"><span>Opciones (separadas por comas)</span><input id="nfo" placeholder="Alta, Media, Baja"></label>
+ <div class="flex gap-2 justify-end"><button class="btn" id="nfc">Cancelar</button><button class="btn p" id="nfs">Crear campo</button></div></div></div>
+<div id="toast"></div>
+<script>
+tailwind.config={darkMode:'class'};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const split=v=>String(v||'').split(/[,;|\n]/).map(s=>s.trim()).filter(Boolean);
+const BASE=[['nombre','Nombre empresa','text'],['tipo','Tipo empresa','text'],['pais','País','text'],['region','Región','text'],['ciudad','Ciudad','text'],['direccion','Dirección','text'],['lat','Latitud','number'],['lng','Longitud','number'],['web','Web','url'],['productos','Productos','list'],['clientes','Clientes','list'],['certificaciones','Certificaciones','list'],['mezclas','Sala de mezclas','bool'],['observaciones','Observaciones','text'],['etiqueta','Etiqueta','list']];
+const ALI={nombre:'nombre empresa name company razonsocial',tipo:'tipo tipoempresa type categoria',pais:'pais country',region:'region provincia state',ciudad:'ciudad city localidad poblacion',direccion:'direccion address ubicacion localizacion domicilio location',lat:'lat latitud latitude',lng:'lng lon long longitud longitude',web:'web website url sitioweb pagina',productos:'productos products',clientes:'clientes customers clients',certificaciones:'certificaciones certifications certificados',mezclas:'salademezclas mezclas mixingroom',observaciones:'observaciones notas notes comentarios',etiqueta:'etiqueta etiquetas tag tags estudio proyecto'};
+const KEY='imi.v1';let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+S=S||{rows:[],fields:BASE.map(([k,l,t])=>({k,l,t,vis:true,b:1})),theme:'auto'};
+Object.assign(S,{view:'dash',f:{q:'',pais:'',tipo:'',cert:'',prod:'',cli:'',grp:'',mez:false},sort:null,n:200});
+let st;function save(){clearTimeout(st);st=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({rows:S.rows,fields:S.fields,theme:S.theme,gkey:S.gkey}))}catch(e){toast('No se pudo guardar en el navegador (almacenamiento lleno). Exporta tus datos.')}},300)}
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',3500)}
+const uid=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?'':n};
+const yes=v=>v===true||/^(si|sí|yes|true|1|x|y)$/i.test(String(v).trim());
+function theme(){const r=document.documentElement;S.theme==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',S.theme)}
+/* filtros */
+function flt(){const f=S.f,q=norm(f.q);let r=S.rows.filter(x=>{
+ if(q&&!norm(['nombre','ciudad','pais','region','tipo','productos','clientes','certificaciones'].map(k=>x[k]).join(' ')).includes(q))return 0;
+ if(f.pais&&x.pais!==f.pais)return 0;if(f.tipo&&x.tipo!==f.tipo)return 0;
+ if(f.grp&&!norm(x.tipo).includes(norm(f.grp)))return 0;if(f.mez&&!x.mezclas)return 0;
+ for(const[a,k]of[['cert','certificaciones'],['prod','productos'],['cli','clientes'],['eti','etiqueta']])if(f[a]&&!split(x[k]).includes(f[a]))return 0;return 1});
+ if(S.sort){const{k,d}=S.sort,n=S.fields.find(a=>a.k===k)?.t==='number';r.sort((a,b)=>d*(n?(a[k]===''||a[k]==null?1e15:a[k])-(b[k]===''||b[k]==null?1e15:b[k]):String(a[k]??'').localeCompare(String(b[k]??''),'es',{numeric:true})))}return r}
+function opts(id,ph,list,cur){$(id).innerHTML=`<option value="">${ph}</option>`+list.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('')}
+function uniq(k,lst){const m=new Set;S.rows.forEach(r=>(lst?split(r[k]):[r[k]]).forEach(v=>v&&m.add(v)));return[...m].sort((a,b)=>a.localeCompare(b,'es')).slice(0,600)}
+function filters(){const f=S.f;opts('#fe','Etiqueta',uniq('etiqueta',1),f.eti);opts('#fp','País',uniq('pais'),f.pais);opts('#ft','Tipo de empresa',uniq('tipo'),f.tipo);opts('#fc','Certificación',uniq('certificaciones',1),f.cert);opts('#fr','Producto',uniq('productos',1),f.prod);opts('#fk','Cliente',uniq('clientes',1),f.cli);
+ $('#chips').innerHTML=['OEM','Proveedor','Fabricante caucho','Compounding'].map(g=>`<span class="chip ${f.grp===g?'on':''}" data-g="${g}">${g}</span>`).join('')+`<span class="chip ${f.mez?'on':''}" data-m="1">Sala de mezclas</span><span class="chip" data-x="1">Limpiar filtros</span>`}
+function refresh(){filters();draw()}
+function draw(){({dash,emp:tbl,map:mapv,imp:()=>{},exp:()=>{},cfg}[S.view])()}
+/* navegación */
+function go(v){S.view=v;$$('section').forEach(s=>s.classList.toggle('hidden',s.id!=='v-'+v));$$('.nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v));$('#fl').classList.toggle('hidden',!['emp','map'].includes(v));filters();draw()}
+/* dashboard */
+function bars(t,m){const e=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8),mx=e[0]?.[1]||1;return `<div class="pan p-4 grow" style="min-width:260px"><b>${t}</b>${e.map(([k,v])=>`<div class="mt-2"><div class="flex justify-between"><span>${esc(k)}</span><span class="mut">${v}</span></div><div class="bar" style="width:${v/mx*100}%"></div></div>`).join('')||'<p class="mut mt-2">Sin datos</p>'}</div>`}
+function dash(){const R=S.rows,c=(k,l)=>{const m={};R.forEach(r=>(l?split(r[k]):[r[k]||'']).forEach(v=>v&&(m[v]=(m[v]||0)+1)));return m};
+ if(!R.length){$('#v-dash').innerHTML=`<h1 class="text-2xl mb-1">Aún no hay empresas</h1><p class="mut mb-4">Importa un Excel, añade empresas a mano o prueba con datos de ejemplo.</p><div class="flex gap-2 flex-wrap"><button class="btn p" data-go="imp">Importar Excel</button><button class="btn" data-go="emp" data-new="1">➕ Añadir empresa</button><button class="btn" id="demo2">Cargar datos de ejemplo</button></div>`;return}
+ const k=(n,l)=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`;
+ $('#v-dash').innerHTML=`<h1 class="text-2xl mb-3">Panorama del mercado</h1><div class="flex flex-wrap mb-5 gap-y-3">${k(R.length,'empresas')}${k(Object.keys(c('pais')).length,'países')}${k(R.filter(r=>r.lat!==''&&r.lat!=null&&r.lng!==''&&r.lng!=null).length,'con coordenadas')}${k(R.filter(r=>r.mezclas).length,'con sala de mezclas')}${k(S.fields.length,'campos')}</div><div class="flex flex-wrap gap-3">${bars('Por tipo de empresa',c('tipo'))}${bars('Por país',c('pais'))}${bars('Por etiqueta',c('etiqueta',1))}${bars('Certificaciones',c('certificaciones',1))}${bars('Productos',c('productos',1))}</div>`}
+/* tabla */
+function td(r,f){const v=r[f.k]??'',a=`data-k="${f.k}"`;
+ if(f.t==='bool')return `<td ${a}><input type="checkbox" ${v?'checked':''}></td>`;
+ if(f.t==='select')return `<td ${a}><select><option></option>${(f.o||[]).map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select></td>`;
+ return `<td ${a} contenteditable="true">${esc(v)}</td>`}
+function tbl(){const cols=S.fields.filter(f=>f.vis),rows=flt();
+ $('#cnt').textContent=`${rows.length} de ${S.rows.length}`;
+ $('#cols').innerHTML=S.fields.map(f=>`<label class="block"><input type="checkbox" data-cv="${f.k}" ${f.vis?'checked':''}> ${esc(f.l)}</label>`).join('');
+ $('#tbl').innerHTML=rows.length?`<table><thead><tr><th class="w0"></th>${cols.map(f=>`<th draggable="true" data-k="${f.k}">${esc(f.l)}${S.sort?.k===f.k?(S.sort.d>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,S.n).map(r=>`<tr data-id="${r.id}"><td class="w0"><button data-open title="Abrir ficha">⤢</button></td>${cols.map(f=>td(r,f)).join('')}</tr>`).join('')}</tbody></table>`:'<p class="p-6 mut">No hay empresas con estos filtros.</p>';
+ $('#more').classList.toggle('hidden',rows.length<=S.n)}
+function setVal(id,k,v){const r=S.rows.find(x=>x.id===id),f=S.fields.find(x=>x.k===k);if(!r)return;r[k]=f.t==='number'?num(v):f.t==='bool'?!!v:v;save()}
+/* ficha */
+function fld(f,v){v=v??'';const a=`data-k="${f.k}"`,l=`<label class="f"><span>${esc(f.l)}${f.t==='list'?' (separa con comas)':''}</span>`;
+ if(f.t==='bool')return `${l}<input type="checkbox" ${a} ${v?'checked':''} style="width:auto"></label>`;
+ if(f.t==='select')return `${l}<select ${a}><option></option>${(f.o||[]).map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+ if(f.k==='observaciones')return `${l}<textarea ${a} rows="4">${esc(v)}</textarea></label>`;
+ return `${l}<input ${a} type="${{number:'number',date:'date',url:'url'}[f.t]||'text'}" ${f.t==='number'?'step="any"':''} value="${esc(v)}"></label>`}
+function openRec(id){const r=id?S.rows.find(x=>x.id===id):{};S.cur=id;$('#drt').textContent=id?(r.nombre||'Empresa'):'Nueva empresa';$('#drb').innerHTML=S.fields.map(f=>fld(f,r[f.k])).join('')+(r.web?`<a class="btn" target="_blank" rel="noopener" href="${esc(r.web)}">Abrir web</a>`:'');$('#drd').style.display=id?'':'none';$('#drd').textContent='Eliminar';$('#dr').classList.add('o')}
+function saveRec(){const o={};$$('#drb [data-k]').forEach(e=>{const f=S.fields.find(x=>x.k===e.dataset.k);o[f.k]=f.t==='bool'?e.checked:f.t==='number'?num(e.value):e.value.trim()});
+ if(!Object.values(o).some(v=>v&&v!==false)){toast('Rellena al menos un campo.');return}
+ if(S.cur)Object.assign(S.rows.find(x=>x.id===S.cur),o);else S.rows.unshift({id:uid(),...o});
+ save();$('#dr').classList.remove('o');refresh();toast('Guardado');geoRun()}
+/* mapa */
+let M,LG,TL;const PAL=['#0e6f6a','#c2561b','#6b4fa0','#b08a00','#2f6fb0','#a03a5a','#4f8a2f','#777'];
+const col=t=>PAL[[...norm(t)].reduce((a,c)=>a+c.charCodeAt(0),0)%PAL.length];
+function pop(r){const ex=S.fields.filter(f=>!f.b&&r[f.k]!==''&&r[f.k]!=null).map(f=>`<div><span class="mut">${esc(f.l)}:</span> ${esc(f.t==='bool'?'Sí':r[f.k])}</div>`).join('');
+ return `<b>${esc(r.nombre)}</b><div class="mut">${esc(r.tipo)} · ${esc([r.ciudad,r.pais].filter(Boolean).join(', '))}</div>${r.direccion?`<div>${esc(r.direccion)}</div>`:''}${r.productos?`<div><span class="mut">Productos:</span> ${esc(r.productos)}</div>`:''}${r.certificaciones?`<div><span class="mut">Certificaciones:</span> ${esc(r.certificaciones)}</div>`:''}${r.web?`<div><a target="_blank" rel="noopener" href="${esc(r.web)}">${esc(r.web)}</a></div>`:''}${ex}<div style="margin-top:6px"><a href="#" data-ed="${r.id}">Editar ficha</a></div>`}
+function mapv(fit){if(S.grid){mgrid();return}if(S.gkey&&!S.gfail){gmapv(fit);return}$('#gmap').style.display='none';$('#mgrid').style.display='none';$('#map').style.display='';ct();if(!M){M=L.map('map',{worldCopyJump:true}).setView([46,8],4);try{TL=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(M)}catch(e){}LG=L.layerGroup().addTo(M);M.on('popupopen',e=>{const a=e.popup.getElement().querySelector('[data-ed]');a&&a.addEventListener('click',ev=>{ev.preventDefault();openRec(a.dataset.ed)})})}
+ setTimeout(()=>M.invalidateSize(),50);LG.clearLayers();const rows=flt().filter(r=>r.lat!==''&&r.lat!=null&&r.lng!==''&&r.lng!=null&&isFinite(r.lat)&&isFinite(r.lng)),T={};
+ rows.forEach(r=>{const g=tagOf(r);T[g]=col(g);if(S.hide.has(g))return;L.circleMarker([r.lat,r.lng],{radius:7,color:'#fff',weight:1.5,fillColor:col(g),fillOpacity:.95}).bindPopup(pop(r)).addTo(LG)});
+ $('#mc').textContent=`${rows.length} con coordenadas · ${flt().length-rows.length} sin ellas`;$('#lg').innerHTML=Object.entries(T).map(([t,c])=>`<span class="chip" data-lg="${esc(t)}" style="${S.hide.has(t)?'opacity:.5':'background:'+c+';border-color:'+c+';color:#fff'}">${esc(t)}</span>`).join('');
+ if(rows.length&&fit!==false)M.fitBounds(L.latLngBounds(rows.map(r=>[r.lat,r.lng])).pad(.2),{maxZoom:9})}
+const tagOf=r=>split(r.etiqueta)[0]||r.tipo||'Sin etiqueta';S.hide=new Set;
+function ensureTag(){if(!S.fields.some(f=>f.k==='etiqueta'))S.fields.push({k:'etiqueta',l:'Etiqueta',t:'list',vis:true,b:1})}
+function ct(){const m={};S.rows.forEach(r=>{if(r.pais&&hasC(r))m[r.pais]=(m[r.pais]||0)+1});const ks=Object.keys(m).sort((a,b)=>m[b]-m[a]);
+ $('#ct').innerHTML=ks.length?`<span class="chip ${S.f.pais?'':'on'}" data-cp="">Todos los países</span>`+ks.map(k=>`<span class="chip ${S.f.pais===k?'on':''}" data-cp="${esc(k)}">${esc(k)} (${m[k]})</span>`).join(''):''}
+let GL,GMAP,GMK=[],GIW;
+function gload(){return GL=GL||new Promise((ok,no)=>{if(window.google&&google.maps)return ok();window.__gi=ok;const s=document.createElement('script');s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(S.gkey)+'&callback=__gi';s.onerror=()=>{GL=null;no()};document.head.appendChild(s);setTimeout(()=>no(),12000)})}
+async function gmapv(fit){$('#map').style.display='none';$('#mgrid').style.display='none';ct();
+ try{await gload()}catch(e){S.gfail=1;toast('No se pudo cargar Google Maps (clave no válida o red bloqueada). Uso el mapa estándar.');return mapv(fit)}
+ $('#gmap').style.display='block';if(!GMAP){GMAP=new google.maps.Map($('#gmap'),{center:{lat:46,lng:8},zoom:4});GIW=new google.maps.InfoWindow()}
+ GMK.forEach(m=>m.setMap(null));GMK=[];const rows=flt().filter(hasC),T={},b=new google.maps.LatLngBounds();
+ rows.forEach(r=>{const g=tagOf(r);T[g]=col(g);if(S.hide.has(g))return;const m=new google.maps.Marker({position:{lat:+r.lat,lng:+r.lng},map:GMAP,title:r.nombre||'',icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:col(g),fillOpacity:.95,strokeColor:'#fff',strokeWeight:1.5}});
+  m.addListener('click',()=>{const d=document.createElement('div');d.style.color='#1d2628';d.innerHTML=pop(r);const a=d.querySelector('[data-ed]');a.onclick=ev=>{ev.preventDefault();openRec(r.id)};GIW.setContent(d);GIW.open(GMAP,m)});GMK.push(m);b.extend(m.getPosition())});
+ $('#mc').textContent=`${rows.length} con coordenadas · ${flt().length-rows.length} sin ellas`;
+ $('#lg').innerHTML=Object.entries(T).map(([t,c])=>`<span class="chip" data-lg="${esc(t)}" style="${S.hide.has(t)?'opacity:.5':'background:'+c+';border-color:'+c+';color:#fff'}">${esc(t)}</span>`).join('');
+ if(GMK.length&&fit!==false)GMAP.fitBounds(b)}
+let GM=[];
+function mgrid(){GM.forEach(m=>m.remove());GM=[];ct();$('#gmap').style.display='none';$('#map').style.display='none';const g=$('#mgrid'),by={};g.style.display='grid';
+ flt().filter(hasC).forEach(r=>(by[r.pais||'Sin país']=by[r.pais||'Sin país']||[]).push(r));const ks=Object.keys(by).sort((a,b)=>by[b].length-by[a].length);
+ g.innerHTML=ks.map((k,i)=>`<div class="pan p-2"><div class="flex justify-between mb-1"><b>${esc(k)}</b><span class="mut">${by[k].length} empresas</span></div><div id="gm${i}" style="height:260px;border-radius:6px;background:var(--hv)"></div></div>`).join('')||'<p class="mut">No hay empresas con coordenadas.</p>';
+ ks.forEach((k,i)=>{const m=L.map('gm'+i,{scrollWheelZoom:false});try{L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(m)}catch(e){}
+  by[k].forEach(r=>L.circleMarker([r.lat,r.lng],{radius:7,color:'#fff',weight:1.5,fillColor:col(tagOf(r)),fillOpacity:.95}).bindPopup(pop(r)).addTo(m));
+  m.fitBounds(L.latLngBounds(by[k].map(r=>[r.lat,r.lng])).pad(.3),{maxZoom:8});
+  m.on('popupopen',e=>{const a=e.popup.getElement().querySelector('[data-ed]');a&&a.addEventListener('click',ev=>{ev.preventDefault();openRec(a.dataset.ed)})});GM.push(m)});
+ $('#mc').textContent=`${ks.length} países`}
+/* importar */
+let IMP=null;
+async function readFile(file){try{const wb=XLSX.read(await file.arrayBuffer());IMP={wb,sheet:wb.SheetNames[0],name:file.name.replace(/\.[^.]+$/,'')};impSheet()}catch(e){toast('No se pudo leer el archivo.')}}
+function impSheet(){const rows=XLSX.utils.sheet_to_json(IMP.wb.Sheets[IMP.sheet],{defval:''});if(!rows.length){$('#imp').innerHTML='<p class="mut">La hoja está vacía.</p>';return}
+ const hs=[...new Set(rows.slice(0,100).flatMap(Object.keys))];IMP.rows=rows;IMP.map={};
+ IMP.hs=hs;const used=new Set,nh=h=>norm(h).replace(/[^a-z0-9]/g,''),rolef=(h,ex)=>Object.keys(ALI).find(k=>!used.has(k)&&ALI[k].split(' ').some(a=>ex?nh(h)===a:(a.length>=5&&nh(h).includes(a))));
+ hs.forEach(h=>{const k=rolef(h,1);if(k){used.add(k);IMP.map[h]=k}});hs.forEach(h=>{if(!IMP.map[h]){const k=rolef(h,0);if(k){used.add(k);IMP.map[h]=k}else IMP.map[h]='+'}});
+ const ro=[...BASE.map(b=>[b[0],b[1]]),...S.fields.filter(f=>!f.b).map(f=>[f.k,f.l])];
+ const o=h=>`<select data-h="${esc(h)}"><option value="">Ignorar</option><option value="+" ${IMP.map[h]==='+'?'selected':''}>Campo nuevo con este título</option>${ro.map(([k,l])=>`<option value="${k}" ${IMP.map[h]===k?'selected':''}>Funciona como: ${esc(l)}</option>`).join('')}</select>`;
+ $('#imp').innerHTML=`<div class="pan p-4"><div class="flex flex-wrap gap-3 items-center mb-3"><b>${rows.length} filas detectadas</b>${IMP.wb.SheetNames.length>1?`<select id="shs">${IMP.wb.SheetNames.map(s=>`<option ${s===IMP.sheet?'selected':''}>${esc(s)}</option>`).join('')}</select>`:''}</div><p class="mut mb-2">Cada columna se convierte en un campo con el título que tiene en el Excel. Si reconozco su función (nombre, país, dirección, coordenadas…) la uso para filtros y mapa; puedes cambiarla:</p><table><tbody>${hs.map(h=>`<tr><td>${esc(h)}<div class="mut text-xs">${esc(String(rows[0][h]).slice(0,40))}</div></td><td>${o(h)}</td></tr>`).join('')}</tbody></table><label class="f mt-3"><span>Etiqueta para estos datos (ej. Lavadoras OEM, Proveedores muflas). Se usa para colorear y filtrar en el mapa.</span><input id="itag" value="${esc(IMP.name||'')}"></label><div class="flex gap-4 mt-3 items-center flex-wrap"><label><input type="radio" name="im" value="add" checked> Añadir a los datos actuales</label><label><input type="radio" name="im" value="rep"> Reemplazar todo</label><button class="btn p" id="doimp">Importar</button></div></div>`}
+function doImp(){const rep=$('[name=im]:checked').value==='rep',mp={};if(rep)S.fields=[];
+ for(const h of IMP.hs){const k=IMP.map[h];if(!k)continue;const l=h.replace(/_\d+$/,''),vs=IMP.rows.slice(0,50).map(r=>r[h]).filter(v=>v!==''),f0=S.fields.find(x=>x.k===k);
+  if(k==='+'){const t=vs.length&&vs.every(v=>typeof v==='number')?'number':vs.length&&vs.every(v=>/^(https?:\/\/|www\.)/i.test(v))?'url':'text',nk='c_'+norm(l).replace(/\W/g,'')+Math.random().toString(36).slice(2,6);S.fields.push({k:nk,l,t,vis:true});mp[h]=nk}
+  else if(f0){if(rep)f0.l=l;mp[h]=k}else{const b=BASE.find(x=>x[0]===k);S.fields.push({k,l,t:b?b[2]:'text',vis:true,b:1});mp[h]=k}}
+ const tag=(($('#itag')||{}).value||'').trim();if(tag)ensureTag();const out=IMP.rows.map(r=>{const o={id:uid()};S.fields.forEach(f=>o[f.k]=f.t==='bool'?false:'');for(const[h,k]of Object.entries(mp)){const f=S.fields.find(x=>x.k===k),v=r[h];o[k]=f.t==='number'?num(v):f.t==='bool'?yes(v):String(v).trim()}return o}).filter(o=>S.fields.some(f=>o[f.k]&&o[f.k]!==false&&f.k!=='id')).map(o=>{if(tag)o.etiqueta=[...split(o.etiqueta),tag].join(', ');return o});
+ if(rep)S.rows=out;else S.rows.push(...out);save();IMP=null;$('#imp').innerHTML='';toast(`${out.length} empresas importadas`);const need=S.rows.some(r=>!hasC(r)&&addr(r));go(need?'map':'emp');need&&geoRun()}
+/* geolocalización (Nominatim / OpenStreetMap) */
+const hasC=r=>r.lat!==''&&r.lat!=null&&r.lng!==''&&r.lng!=null&&isFinite(r.lat)&&isFinite(r.lng);
+const addr=r=>[r.direccion,r.ciudad,r.region,r.pais].filter(Boolean).join(', ');
+async function nom(q){if(S.gkey&&window.google&&google.maps&&google.maps.Geocoder){let gr;try{gr=await new google.maps.Geocoder().geocode({address:q})}catch(e){if(String(e.code||e).includes('ZERO_RESULTS'))return null;throw e}const g=gr.results[0];return g?{lat:g.geometry.location.lat(),lon:g.geometry.location.lng()}:null}
+const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=es&q='+encodeURIComponent(q));if(!r.ok)throw 0;return(await r.json())[0]}
+let GEO=0;
+async function geoRun(){if(GEO)return;const need=S.rows.filter(r=>!hasC(r)&&!r._gf&&addr(r));if(!need.length){toast('Todas las empresas con dirección ya tienen coordenadas');return}
+ GEO=1;if(S.gkey){try{await gload()}catch(e){}};[['lat','Latitud'],['lng','Longitud']].forEach(([k,l])=>{if(!S.fields.some(f=>f.k===k))S.fields.push({k,l,t:'number',vis:false,b:1})});let ok=0,i=0;
+ for(const r of need){i++;if(S.view==='map')$('#mc').textContent=`Localizando ${i} de ${need.length}…`;
+  try{let p=await nom(addr(r));if(!p){const c=[r.ciudad,r.pais].filter(Boolean).join(', ');if(c&&c!==addr(r))p=await nom(c)}
+   if(p){r.lat=+p.lat;r.lng=+p.lon;ok++}else r._gf=1}
+  catch(e){GEO=0;save();toast('No se pudo contactar con el servicio de geolocalización. Desde esta página publicada la red está bloqueada: abre el archivo HTML en tu equipo o servidor.');return}
+  if(i%5===0&&S.view==='map')mapv(false);await new Promise(s=>setTimeout(s,1100))}
+ GEO=0;save();if(S.view==='map')mapv();toast(`${ok} de ${need.length} empresas localizadas`)}
+/* exportar */
+async function dl(name,data,mime){const blob=new Blob([data],{type:mime});let D=null;try{D=window.claude&&await window.claude.use('downloads')}catch(e){}
+ if(D){try{await D.save({filename:name,data:blob})}catch(e){if(e.code!=='declined')toast('No se pudo guardar el archivo.')}return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+function exp(kind){const rows=($('#eo').checked?flt():S.rows).map(r=>{const o={};S.fields.forEach(f=>o[f.l]=f.t==='bool'?(r[f.k]?'Sí':'No'):(r[f.k]??''));return o});
+ if(kind==='json')return dl('empresas.json',JSON.stringify(rows,null,2),'application/json');
+ const ws=XLSX.utils.json_to_sheet(rows,{header:S.fields.map(f=>f.l)});
+ if(kind==='csv')return dl('empresas.csv','\ufeff'+XLSX.utils.sheet_to_csv(ws),'text/csv');
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Empresas');dl('empresas.xlsx',XLSX.write(wb,{type:'array',bookType:'xlsx'}),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+/* configuración y campos */
+function cfg(){$('#gk').value=S.gkey||'';$('#fl2').innerHTML=S.fields.map((f,i)=>`<div class="flex gap-2 items-center mb-1"><input data-rn="${f.k}" value="${esc(f.l)}" class="grow"><span class="mut text-xs w-16">${f.t}</span><button class="btn" data-mv="${i}" data-d="-1">↑</button><button class="btn" data-mv="${i}" data-d="1">↓</button><label><input type="checkbox" data-cv2="${f.k}" ${f.vis?'checked':''}> visible</label>${f.b?'':`<button class="btn d" data-rm="${f.k}">Eliminar</button>`}</div>`).join('')}
+function newField(){const n=$('#nfn').value.trim();if(!n){toast('Escribe un nombre para el campo.');return}const t=$('#nft').value;
+ S.fields.push({k:'c_'+norm(n).replace(/\W/g,'')+(Date.now()%1e4),l:n,t,vis:true,...(t==='select'?{o:split($('#nfo').value)}:{})});save();$('#mo').classList.remove('o');$('#nfn').value='';$('#nfo').value='';refresh();toast('Campo creado: aparece en tabla, fichas y mapa')}
+const DEMO=[['BSH Hausgeräte','OEM','Alemania','Baviera','Múnich',48.14,11.58,'Lavadoras','ISO 9001, ISO 14001',0],['Electrolux','OEM','Suecia','Estocolmo','Estocolmo',59.33,18.07,'Lavadoras','ISO 14001',0],['Whirlpool EMEA','OEM','Italia','Lombardía','Varese',45.82,8.82,'Lavadoras, secadoras','ISO 9001',0],['ContiTech','Fabricante caucho','Alemania','Baja Sajonia','Hannover',52.37,9.73,'Muflas, tubos, juntas','IATF 16949, ISO 9001',1],['Trelleborg','Fabricante caucho','Suecia','Escania','Trelleborg',55.38,13.16,'Muflas, juntas','ISO 9001',1],['Saint-Gobain Performance Plastics','Proveedor tubos','Francia','Isla de Francia','Courbevoie',48.9,2.26,'Tubos','ISO 9001',0],['Lanxess','Compounding','Alemania','Renania','Colonia',50.94,6.96,'EPDM, compuestos','ISO 14001',1]];
+function demo(){DEMO.forEach(d=>S.rows.push({id:uid(),nombre:d[0],tipo:d[1],pais:d[2],region:d[3],ciudad:d[4],lat:d[5],lng:d[6],productos:d[7],certificaciones:d[8],mezclas:!!d[9],clientes:'',direccion:'',web:'',observaciones:'Dato de ejemplo'}));save();toast('Datos de ejemplo cargados: edítalos o bórralos');refresh()}
+/* eventos */
+document.addEventListener('click',e=>{const t=e.target,c=s=>t.closest(s);let x;
+ if(x=c('.nav'))go(x.dataset.v);else if(x=c('[data-go]')){go(x.dataset.go);if(x.dataset.new)openRec()}
+ else if(c('#add'))openRec();else if(c('#addf')||c('#addf2'))$('#mo').classList.add('o');else if(c('#nfc'))$('#mo').classList.remove('o');else if(c('#nfs'))newField();
+ else if(c('#drx'))$('#dr').classList.remove('o');else if(c('#drs'))saveRec();
+ else if(c('#drd')){const b=$('#drd');if(b.dataset.s){S.rows=S.rows.filter(r=>r.id!==S.cur);save();b.dataset.s='';$('#dr').classList.remove('o');refresh()}else{b.dataset.s=1;b.textContent='¿Seguro? Pulsa de nuevo'}}
+ else if(c('#gks')){S.gkey=$('#gk').value.trim();S.gfail=0;save();toast('Clave guardada. Recarga la página para aplicarla.')}else if(c('#geo')){S.rows.forEach(r=>delete r._gf);geoRun()}else if(c('#demo')||c('#demo2'))demo();
+ else if(c('#reset')){const b=$('#reset');if(b.dataset.s){S.rows=[];S.fields=BASE.map(([k,l,t])=>({k,l,t,vis:true,b:1}));save();b.dataset.s='';b.textContent='Borrar todos los datos';cfg();toast('Datos borrados')}else{b.dataset.s=1;b.textContent='¿Seguro? Pulsa de nuevo'}}
+ else if(x=c('[data-t]')){S.theme=x.dataset.t;theme();save()}
+ else if(x=c('[data-e]'))exp(x.dataset.e);else if(c('#doimp'))doImp();
+ else if(c('#bta')){const g=$('#bt').value.trim();if(!g){toast('Escribe la etiqueta.');return}ensureTag();const rs=flt();rs.forEach(r=>{if(!split(r.etiqueta).includes(g))r.etiqueta=[...split(r.etiqueta),g].join(', ')});save();refresh();toast(`Etiqueta «${g}» añadida a ${rs.length} empresas`)}else if(c('#clr')){S.sort=null;tbl()}else if(c('#more')){S.n+=300;tbl()}
+ else if(x=c('[data-open]'))openRec(c('tr').dataset.id);
+ else if(x=c('#tbl th[data-k]')){if(S.dragged){S.dragged=0;return}const k=x.dataset.k;S.sort=S.sort?.k===k?(S.sort.d>0?{k,d:-1}:null):{k,d:1};tbl()}
+ else if(x=c('[data-lg]')){const t=x.dataset.lg;S.hide.has(t)?S.hide.delete(t):S.hide.add(t);mapv(false)}else if(x=c('[data-cp]')){S.f.pais=x.dataset.cp;refresh()}else if(c('#mg')){S.grid=!S.grid;$('#mg').textContent=S.grid?'Mapa único':'Un mapa por país';mapv()}
+ else if(x=c('[data-g]')){S.f.grp=S.f.grp===x.dataset.g?'':x.dataset.g;refresh()}else if(c('[data-m]')){S.f.mez=!S.f.mez;refresh()}
+ else if(c('[data-x]')){S.f={q:'',pais:'',tipo:'',cert:'',prod:'',cli:'',grp:'',mez:false};$('#q').value='';refresh()}
+ else if(x=c('[data-mv]')){const i=+x.dataset.mv,j=i+ +x.dataset.d;if(S.fields[j]){[S.fields[i],S.fields[j]]=[S.fields[j],S.fields[i]];save();cfg()}}
+ else if(x=c('[data-rm]')){const b=x;if(b.dataset.s){S.fields=S.fields.filter(f=>f.k!==b.dataset.rm);save();cfg()}else{b.dataset.s=1;b.textContent='¿Seguro?'}}});
+document.addEventListener('change',e=>{const t=e.target;
+ if(t.dataset.cv||t.dataset.cv2){const f=S.fields.find(f=>f.k===(t.dataset.cv||t.dataset.cv2));f.vis=t.checked;save();S.view==='emp'?tbl():cfg()}
+ else if(t.dataset.h)IMP.map[t.dataset.h]=t.value;else if(t.id==='shs'){IMP.sheet=t.value;impSheet()}
+ else if(t.id==='nft')$('#nfow').classList.toggle('hidden',t.value!=='select');
+ else if(t.id==='file'&&t.files[0])readFile(t.files[0]);
+ else if(t.closest('#tbl')&&t.closest('td')){const td=t.closest('td');setVal(td.closest('tr').dataset.id,td.dataset.k,t.type==='checkbox'?t.checked:t.value)}
+ else if(t.dataset.rn){S.fields.find(f=>f.k===t.dataset.rn).l=t.value||'Campo';save()}
+ else if(['fe','fp','ft','fc','fr','fk'].includes(t.id)){S.f[{fe:'eti',fp:'pais',ft:'tipo',fc:'cert',fr:'prod',fk:'cli'}[t.id]]=t.value;draw()}});
+$('#q').addEventListener('input',e=>{S.f.q=e.target.value;draw()});
+document.addEventListener('focusout',e=>{const td=e.target.closest?.('td[contenteditable]');if(td)setVal(td.closest('tr').dataset.id,td.dataset.k,td.innerText.trim())});
+document.addEventListener('dragstart',e=>{const th=e.target.closest?.('th[data-k]');if(th){S.drag=th.dataset.k;S.dragged=1}});
+document.addEventListener('dragover',e=>{if(e.target.closest?.('th[data-k]'))e.preventDefault()});
+document.addEventListener('drop',e=>{const th=e.target.closest?.('th[data-k]');if(th&&S.drag&&S.drag!==th.dataset.k){e.preventDefault();const i=S.fields.findIndex(f=>f.k===S.drag),[m]=S.fields.splice(i,1);S.fields.splice(S.fields.findIndex(f=>f.k===th.dataset.k),0,m);save();tbl()}
+ const d=e.target.closest?.('#drop');if(d){e.preventDefault();e.dataTransfer.files[0]&&readFile(e.dataTransfer.files[0])}});
+document.addEventListener('dragover',e=>{if(e.target.closest?.('#drop'))e.preventDefault()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches?.('td[contenteditable]')){e.preventDefault();e.target.blur()}if(e.key==='Escape')$('#dr').classList.remove('o')});
+ensureTag();theme();go('dash');
+</script></body></html>
